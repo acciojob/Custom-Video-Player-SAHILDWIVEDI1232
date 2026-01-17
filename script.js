@@ -7,42 +7,47 @@ const toggle = player.querySelector('.toggle');
 const skipButtons = player.querySelectorAll('[data-skip]');
 const ranges = player.querySelectorAll('.player__slider');
 
-/* Play / Pause toggle */
+/* Play / Pause */
 function togglePlay() {
-  const method = video.paused ? 'play' : 'pause';
-  video[method]();
+  if (video.paused) {
+    video.play();
+  } else {
+    video.pause();
+  }
 }
 
-/* Update play button icon */
+/* Update Play/Pause button */
 function updateButton() {
   toggle.textContent = video.paused ? '►' : '❚ ❚';
 }
 
 /* Update progress bar */
 function handleProgress() {
+  if (!video.duration) return;
   const percent = (video.currentTime / video.duration) * 100;
   progressBar.style.flexBasis = `${percent}%`;
 }
 
-/* Seek video when clicking progress bar */
+/* Click progress bar to seek */
 function scrub(e) {
   const scrubTime = (e.offsetX / progress.offsetWidth) * video.duration;
   video.currentTime = scrubTime;
 }
 
-/* Skip forward / backward */
+/* Skip buttons */
 function skip() {
-  video.currentTime += parseFloat(this.dataset.skip);
+  video.currentTime += Number(this.dataset.skip);
 }
 
-/* Handle volume & playback speed */
+/* Volume & playback speed */
 function handleRangeUpdate() {
   video[this.name] = this.value;
 }
 
-/* Error handling */
+/* Graceful error handling (NO alert) */
 video.addEventListener('error', () => {
-  alert('Video failed to load. Please check the file.');
+  console.error('Video failed to load');
+  toggle.textContent = '⚠';
 });
 
 /* Event listeners */
@@ -53,12 +58,15 @@ video.addEventListener('timeupdate', handleProgress);
 
 toggle.addEventListener('click', togglePlay);
 
-skipButtons.forEach(button => button.addEventListener('click', skip));
-ranges.forEach(range => range.addEventListener('change', handleRangeUpdate));
-ranges.forEach(range => range.addEventListener('mousemove', handleRangeUpdate));
+skipButtons.forEach(btn => btn.addEventListener('click', skip));
+ranges.forEach(range => {
+  range.addEventListener('change', handleRangeUpdate);
+  range.addEventListener('mousemove', handleRangeUpdate);
+});
 
+/* Progress bar dragging */
 let mouseDown = false;
 progress.addEventListener('click', scrub);
-progress.addEventListener('mousemove', (e) => mouseDown && scrub(e));
-progress.addEventListener('mousedown', () => mouseDown = true);
-progress.addEventListener('mouseup', () => mouseDown = false);
+progress.addEventListener('mousemove', e => mouseDown && scrub(e));
+progress.addEventListener('mousedown', () => (mouseDown = true));
+progress.addEventListener('mouseup', () => (mouseDown = false));
